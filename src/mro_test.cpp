@@ -89,7 +89,7 @@ class Points_For_All_Classes{
             for (int i = 0; i < strukt.k_izm; i++){
                 int start = strukt.min_ranges[i];
                 int end = strukt.max_ranges[i];
-                float x = rand() % ((end - start) * 100 + 1) / 100.0 + start;
+                float x = rand() % ((end - start)*100 + 1) / 100.0 + start;
                 s.push_back(x);
             };
             pfos.points.push_back(s);
@@ -308,11 +308,10 @@ vector <vector <double>> newy(vector <vector <double>> y, vector <vector <double
 
 void transit_coshyap(string file_to_transit, vector <vector <double>> vector_to_transit){
       ofstream out;
-      out.open(file_to_transit,  ios::app);
+      out.open(file_to_transit);
       for (int i = 0; i < vector_to_transit.size(); i++){
             out << vector_to_transit[i][0] << " ";
       };
-      out << "\n";
       out.close();
 };
 
@@ -375,293 +374,6 @@ double manhat(vector<double> p1, vector<double> p2){
       return sum;
 };
 
-double find_density(vector<vector<double>> elements, int k_elem){
-      double dens = 0;
-      double h = 10;
-      for (int i = 0; i < elements.size(); i++){
-            dens = dens + (1 / pow(h, 2)) * (pow(h, 2) - pow(evklid(elements[k_elem], elements[i]), 2));
-      };
-      return dens;
-};
-
-vector<vector<double>> copy_vector(vector<vector<double>> vector_to_copy){
-      vector<vector<double>> new_vector;
-      vector<double> new_row;
-      for (int i = 0; i < vector_to_copy.size(); i++){
-            new_row = {};
-            for (int j = 0; j < vector_to_copy[0].size(); j++){
-                  new_row.push_back(vector_to_copy[i][j]);
-            };
-            new_vector.push_back(new_row);
-      };
-      return new_vector;
-};
-
-vector<vector<double>> alg_proseivaniya(vector<vector<double>> elements, int k_elems){
-      vector<vector<double>> result_points;
-      vector<double> densities;
-      for (int i = 0; i < elements.size(); i++){
-            densities.push_back(find_density(elements, i));
-      };
-      vector<vector<double>> vec = copy_vector(elements);
-      double max;
-      int n;
-      for (int i = 0; i < k_elems; i++){
-            max = densities[0];
-            n = 0;
-            for (int j = 0; j < densities.size(); j++){
-                  if (densities[j] > max){
-                        max = densities[j];
-                        n = j;
-                  };
-            };
-            result_points.push_back(elements[n]);
-            densities[n] = -1000000;
-      };
-      return result_points;
-};
-
-vector<double> find_new_max_point(vector<vector<double>> elements, vector<vector<double>> max_points){
-      vector<double> distances_to_mp;
-      vector<double> distances;
-      double min;
-      double max;
-      int n;
-      for (int i = 0; i < elements.size(); i++){
-            distances_to_mp = {};
-            for (int j = 0; j < max_points.size(); j++){
-                  distances_to_mp.push_back(evklid(elements[i], max_points[j]));
-            };
-            min = distances_to_mp[0];
-            for (int j = 0; j < distances_to_mp.size(); j++){
-                  if (distances_to_mp[j] < min){
-                        min = distances_to_mp[j];
-                  };
-            };
-            distances.push_back(min);
-      };
-      n = 0;
-      max = distances[0];
-      for (int i = 0; i < distances.size(); i++){
-            if (distances[i] > max){
-                  max = distances[i];
-                  n = i;
-            };
-      };
-      return elements[n];
-};
-
-vector<vector<double>> alg_max_distance(vector<vector<double>> elements, int k_elements){
-      vector<vector<double>> vec = copy_vector(elements);
-      vector<vector<double>> result_points;
-      result_points.push_back(vec[0]);
-      for (int i = 0; i < k_elements - 1; i++){
-            result_points.push_back(find_new_max_point(elements, result_points));
-      };
-      return result_points;
-};
-
-vector<vector<vector<double>>> create_clasters(vector<vector<double>> centres, vector<vector<double>> elems){
-      vector<vector<vector<double>>> clasters(centres.size());
-      int n;
-      double min;
-      for (vector<double> el : elems){
-            min = evklid(el, centres[0]);
-            n = 0;
-            for (int i = 0; i < centres.size(); i++){
-                  if (evklid(el, centres[i]) < min){
-                        min = evklid(el, centres[i]);
-                        n = i;
-                  };
-            };
-            clasters[n].push_back(el);
-      };
-      return clasters;
-};
-
-vector<double> find_new_claster_centroid(vector<vector<double>> claster){
-      if (claster.size() == 0) return {};
-      vector<double> new_centroid;
-      double sum;
-      double avg;
-      for (int i = 0; i < claster[0].size(); i++){
-            sum = 0;
-            for (int j = 0; j < claster.size(); j++) sum = sum + claster[j][i];
-            avg = sum / claster.size();
-            new_centroid.push_back(avg);
-      };
-      return new_centroid;
-};
-
-vector<vector<double>> create_new_centroids(vector<vector<vector<double>>> clasters){
-      vector<vector<double>> new_centroids;
-      for (vector<vector<double>> cl : clasters){
-            new_centroids.push_back(find_new_claster_centroid(cl));
-      };
-      return new_centroids;
-};
-
-bool equal_matrices(vector<vector<double>> m1, vector<vector<double>> m2){
-      if (m1.size() != m2.size()) return false;
-      for (int i = 0; i < m1.size(); i++){
-            for (int j = 0; j < m1[0].size(); j++){
-                  if (m1[i][j] != m2[i][j]) return false;
-            };
-      };
-      return true;
-};
-
-vector<vector<double>> k_means(Points_For_All_Classes repos, int k){
-      vector<vector<double>> all_elems;
-      vector<vector<double>> centroids;
-      for (int i = 0; i < repos.points_repository.size(); i++){
-            for (vector<double> j : repos.points_repository[i].points){
-                  all_elems.push_back(j);
-            };
-      };
-      // Выбор стартовых центроидов
-      //centroids = alg_proseivaniya(all_elems, k);
-      centroids = alg_max_distance(all_elems, k);
-      ofstream file;
-      file.open("start_centroids.txt");
-      file << k << "\n";
-      for (int i = 0; i < k; i++){
-            for (double j : centroids[i]) file << to_string(j) << " ";
-            file << "\n";
-      };
-      file.close();
-      // Выравнивание центров кластеров
-      while (not equal_matrices(centroids, create_new_centroids(create_clasters(centroids, all_elems))))
-      { 
-            centroids = create_new_centroids(create_clasters(centroids, all_elems));
-      };
-      // Вывод итоговых центров кластеров
-      //print_matrix(centroids);
-      file.open("k_means.txt");
-      file << k << "\n";
-      for (int i = 0; i < k; i++){
-            for (double j : centroids[i]) file << to_string(j) << " ";
-            file << "\n";
-      };
-      file.close();
-      return centroids;
-};
-
-vector<vector<double>> find_points_round(vector<vector<double>> elements, vector<double> point, double r){
-      vector<vector<double>> points;
-      for (int i = 0; i < elements.size(); i++){
-            if (evklid(point, elements[i]) <= r){
-                  points.push_back(elements[i]);
-            };
-      };
-      return points;
-};
-
-vector<double> find_new_round_center(vector<vector<double>> points_in_round){
-      vector<double> new_center;
-      double sum;
-      double avg;
-      for (int i = 0; i < points_in_round[0].size(); i++){
-            sum = 0;
-            for (int j = 0; j < points_in_round.size(); j++) sum = sum + points_in_round[j][i];
-            avg = sum / points_in_round.size();
-            new_center.push_back(avg);
-      };
-      return new_center;
-};
-
-vector<vector<double>> delete_used_points(vector<vector<double>> elems, vector<vector<double>> points){
-      vector<vector<double>> vec;
-      bool have;
-      for (int i = 0; i < elems.size(); i++){
-            have = false;
-            for (int j = 0; j < points.size(); j++){
-                  if (elems[i] == points[j]){
-                        have = true;
-                  };
-            };
-            if (not have){
-                  vec.push_back(elems[i]);
-            };
-      };
-      return vec;
-};
-
-vector<vector<double>> forel(Points_For_All_Classes repos, double r){
-      vector<vector<double>> all_elems;
-      vector<vector<double>> points_round;
-      vector<vector<double>> centres;
-      for (int i = 0; i < repos.points_repository.size(); i++){
-            for (vector<double> j : repos.points_repository[i].points){
-                  all_elems.push_back(j);
-            };
-      };
-      ofstream file;
-      file.open("forel.txt");
-      file << r << "\n";
-      file.close();
-      while (not equal_matrices(all_elems, {})) {
-            points_round = find_points_round(all_elems, all_elems[0], r);
-            while (not equal_matrices(points_round, find_points_round(all_elems, find_new_round_center(points_round), r))){
-                  points_round = find_points_round(all_elems, find_new_round_center(points_round), r);
-            };
-            centres.push_back(find_new_round_center(points_round));
-            file.open("forel.txt", ios::app);
-            file << "next round" << endl;
-            for (double i : find_new_round_center(points_round)) file << to_string(i) << " ";
-            file << endl;
-            for (int i = 0; i < points_round.size(); i++){
-                  for (double j : points_round[i]) file << to_string(j) << " ";
-            file << endl;
-            };
-            file.close();
-            all_elems = delete_used_points(all_elems, points_round);
-      };
-      return centres;
-};
-
-vector<vector<double>> delete_small_clasters(Points_For_All_Classes repos, vector<vector<double>> centroids, double k){
-      vector<vector<double>> all_elems;
-      vector<vector<double>> new_centroids = copy_vector(centroids);
-      for (int i = 0; i < repos.points_repository.size(); i++){
-            for (vector<double> j : repos.points_repository[i].points){
-                  all_elems.push_back(j);
-            };
-      };
-      vector<vector<vector<double>>> clasters = create_clasters(centroids, all_elems);
-      int n_centroids = centroids.size();
-      bool need_to_delete = true;
-      int n;
-      while (need_to_delete){
-            need_to_delete = false;
-            for (int i = 0; i < clasters.size(); i++){
-                  if (clasters[i].size() < k){
-                        need_to_delete = true;
-                        n = i;
-                        break;
-                  };
-            };
-            if (need_to_delete){
-                  new_centroids.erase(new_centroids.begin() + n);
-                  n_centroids = n_centroids - 1;
-                  while (not equal_matrices(new_centroids, create_new_centroids(create_clasters(new_centroids, all_elems))))
-                  { 
-                        new_centroids = create_new_centroids(create_clasters(new_centroids, all_elems));
-                  };
-            clasters = create_clasters(new_centroids, all_elems);
-            };
-      };
-      ofstream file;
-      file.open("redacted_centroids.txt");
-      file << n_centroids << "\n";
-      for (int i = 0; i < n_centroids; i++){
-            for (double j : new_centroids[i]) file << to_string(j) << " ";
-            file << "\n";
-      };
-      file.close();
-      return new_centroids;
-};
-
 int main()
 {
     // Создаем класс для хранения образов
@@ -680,22 +392,19 @@ int main()
     for (int i = 0; i < class_k; i++){
         points_rep.transit_points_for_one_struct("file_for_drawing.txt", i);
     };
+    // Находим центры классов
+    //vector<double> center1 = points_rep.find_center(rep, 0);
+    //vector<double> center2 = points_rep.find_center(rep, 1);
+    //for (double i : center1){
+    //    cout << i << endl;
+    //};
+    //for (double i : center2){
+    //    cout << i << endl;
+    //};
+    // Находим метрики
+    // cout << evklid(center1, center2) << endl;
+    // cout << manhat(center1, center2);
     // Кошьяпчик
-    ofstream out;
-    out.open("Hokashyap.txt");
-    out.clear();
-    vector<vector<double>> lin_fun;
-    for (int i = 0; i < (class_k - 1); i++){
-      for (int j = i + 1; j < class_k; j++){
-           lin_fun = coshyap(points_rep, i, j);
-      };
-    };
-    out.close();
-    // k-means алгоритм
-    vector<vector<double>> centroids = k_means(points_rep, 5);
-    // Удаление кластеров  
-    vector<vector<double>> redact_centroids = delete_small_clasters(points_rep, centroids, 10);
+    vector<vector<double>> lin_fun = coshyap(points_rep, 0, 1);
 
-    // Алгоритм FOREL
-    vector<vector<double>> round_centres = forel(points_rep, 25);  
 }
